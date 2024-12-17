@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 import { 
   Clock, 
   ChefHat, 
@@ -8,15 +8,13 @@ import {
   ClipboardList, 
   Utensils,
   ArrowLeft,
-  Star,
-  Heart,
-  PlusCircle
+  Star
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase'; // Import from your existing Supabase file
+
+// wuduwh
 
 interface RecipeDisplayProps {
   recipe: {
-    id?: string;  // Add optional id for database tracking
     name: string;
     cookingTime?: {
       prep?: string;
@@ -28,132 +26,40 @@ interface RecipeDisplayProps {
       calories?: string;
     };
     ingredients: {
-      item: string; 
-      quantity: string;
-    }[];
+      item: string; quantity: string;
+}[];
     instructions: string[];
     serves: string;
-    image_url?: string;  // Optional image URL
   };
-  session: any;  // Use session from Supabase auth
   onBack: () => void;
 }
 
-const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ 
-  recipe, 
-  session, 
-  onBack 
-}) => {
+const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe, onBack }) => {
   const [activeTab, setActiveTab] = useState<'ingredients' | 'instructions'>('ingredients');
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isInCookbook, setIsInCookbook] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (session && recipe.id) {
-      checkRecipeStatus();
-    }
-  }, [session, recipe.id]);
-
-  const checkRecipeStatus = async () => {
-    if (!session) return;
-
-    setIsLoading(true);
-    try {
-      const { data: favoriteData, error: favError } = await supabase
-        .from('favorites')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .eq('recipe_id', recipe.id)
-        .single();
-
-      const { data: cookbookData, error: cookbookError } = await supabase
-        .from('cookbook')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .eq('recipe_id', recipe.id)
-        .single();
-
-      setIsFavorite(!!favoriteData);
-      setIsInCookbook(!!cookbookData);
-    } catch (error) {
-      console.error('Error checking recipe status:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const toggleFavorite = async () => {
-    if (!session || !recipe.id) return;
-
-    setIsLoading(true);
-    try {
-      if (isFavorite) {
-        await supabase
-          .from('favorites')
-          .delete()
-          .eq('user_id', session.user.id)
-          .eq('recipe_id', recipe.id);
-      } else {
-        await supabase
-          .from('favorites')
-          .upsert({
-            user_id: session.user.id, 
-            recipe_id: recipe.id,
-            recipe_data: recipe
-          });
-      }
-      setIsFavorite(!isFavorite);
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const addToCookbook = async () => {
-    if (!session || !recipe.id) return;
-
-    setIsLoading(true);
-    try {
-      if (isInCookbook) {
-        await supabase
-          .from('cookbook')
-          .delete()
-          .eq('user_id', session.user.id)
-          .eq('recipe_id', recipe.id);
-      } else {
-        await supabase
-          .from('cookbook')
-          .upsert({
-            user_id: session.user.id, 
-            recipe_id: recipe.id,
-            recipe_data: recipe
-          });
-      }
-      setIsInCookbook(!isInCookbook);
-    } catch (error) {
-      console.error('Error adding to cookbook:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Existing helper functions
+  
+  // Helper function to extract cooking time
   const getCookingTime = (time?: { prep?: string; cook?: string; total?: string }): number => {
     if (time?.total) {
       const match = time.total.match(/(\d+)\s*minutes/);
-      if (match) return parseInt(match[1]);
+      if (match) {
+        return parseInt(match[1]);
+      }
     } else if (time?.cook) {
       const match = time.cook.match(/(\d+)\s*minutes/);
-      if (match) return parseInt(match[1]);
+      if (match) {
+        return parseInt(match[1]);
+      }
     } else if (time?.prep) {
       const match = time.prep.match(/(\d+)\s*minutes/);
-      if (match) return parseInt(match[1]);
+      if (match) {
+        return parseInt(match[1]);
+      }
     }
     return 0;
   };
 
+
+  // Helper function to extract calories
   const getCalories = (nutritionalInfo?: { calories?: string }): number => {
     return nutritionalInfo?.calories ? parseInt(nutritionalInfo.calories) : 0;
   };
@@ -173,63 +79,26 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({
         hover:shadow-4xl 
         duration-300
       ">
-        {/* Back Button and User Actions */}
+        {/* Back Button */}
         <div className="relative">
-          <div className="absolute top-4 left-4 z-10 flex space-x-2">
-            <button 
-              onClick={onBack}
-              className="
-                bg-white/70 
-                p-3 
-                rounded-full 
-                hover:bg-white/90 
-                transition-all 
-                shadow-md 
-                hover:shadow-lg
-              "
-            >
-              <ArrowLeft className="text-blue-800 w-6 h-6" />
-            </button>
-
-            {session && (
-              <div className="flex space-x-2">
-                <button 
-                  onClick={toggleFavorite}
-                  disabled={isLoading}
-                  className={`
-                    bg-white/70 
-                    p-3 
-                    rounded-full 
-                    hover:bg-white/90 
-                    transition-all 
-                    shadow-md 
-                    hover:shadow-lg
-                    ${isFavorite ? 'text-red-500' : 'text-gray-500'}
-                    ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-                  `}
-                >
-                  <Heart className="w-6 h-6" fill={isFavorite ? 'currentColor' : 'none'} />
-                </button>
-                <button 
-                  onClick={addToCookbook}
-                  disabled={isLoading}
-                  className={`
-                    bg-white/70 
-                    p-3 
-                    rounded-full 
-                    hover:bg-white/90 
-                    transition-all 
-                    shadow-md 
-                    hover:shadow-lg
-                    ${isInCookbook ? 'text-green-500' : 'text-gray-500'}
-                    ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-                  `}
-                >
-                  <PlusCircle className="w-6 h-6" />
-                </button>
-              </div>
-            )}
-          </div>
+          <button 
+            onClick={onBack}
+            className="
+              absolute 
+              top-4 
+              left-4 
+              z-10 
+              bg-white/70 
+              p-3 
+              rounded-full 
+              hover:bg-white/90 
+              transition-all 
+              shadow-md 
+              hover:shadow-lg
+            "
+          >
+            <ArrowLeft className="text-blue-800 w-6 h-6" />
+          </button>
           
           {/* Dynamic Image */}
           <div className="h-80 w-full relative overflow-hidden">
