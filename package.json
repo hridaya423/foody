@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@supabase/gotrue-js": "^2.67.2",
-    "@supabase/supabase-js": "^2.47.8",
+    "@supabase/supabase-js": "^2.86.2",
     "axios": "^1.7.9",
     "lucide-react": "^0.468.0",
     "next": "15.1.0",
