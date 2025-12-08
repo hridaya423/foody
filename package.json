@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/gotrue-js": "^2.67.2",
+    "@supabase/gotrue-js": "^2.86.2",
     "@supabase/supabase-js": "^2.86.2",
     "axios": "^1.7.9",
     "lucide-react": "^0.468.0",
